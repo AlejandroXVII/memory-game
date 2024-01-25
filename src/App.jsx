@@ -1,24 +1,23 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useState, useEffect } from "react";
 import "./App.css";
-
-function getRandomInt(max) {
-	return Math.floor(Math.random() * max);
-}
 
 function App() {
 	const [img, setIMG] = useState(0);
 	const [pokeName, setPokeName] = useState(0);
-	async function getPokemon() {
-		const response = await fetch(
-			"https://pokeapi.co/api/v2/pokemon/" + getRandomInt(1000)
-		);
-		const pokemonData = await response.json();
-		console.log(pokemonData);
-		setIMG(pokemonData.sprites);
-		setPokeName(pokemonData.name);
-	}
+	const [id, setID] = useState(1);
+
+	useEffect(() => {
+		const fetchData = async () => {
+			const response = await fetch(
+				"https://pokeapi.co/api/v2/pokemon/" + id
+			);
+			const pokemonData = await response.json();
+			console.log(pokemonData);
+			setIMG(pokemonData.sprites);
+			setPokeName(pokemonData.name);
+		};
+		fetchData().catch(console.error);
+	}, [id]);
 	return (
 		<>
 			<div>
@@ -29,10 +28,12 @@ function App() {
 					alt="React logo"
 				/>
 			</div>
-			<h2>{pokeName}</h2>
+			<h2>
+				{pokeName}: {id}
+			</h2>
 			<h1>POKEMON</h1>
 			<div className="card">
-				<button onClick={() => getPokemon()}>
+				<button onClick={() => setID(getRandomInt(1000))}>
 					picachu yo te elijo!
 				</button>
 			</div>
