@@ -1,18 +1,46 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import { getArrayPokemonIDs, shuffleArray } from "./pokemonList";
+export default App;
 
 function PokemonCards() {
-	const [pokemonIDs, setPokemonIDs] = useState([5, 1, 2, 3, 4]);
+	const [pokemonIDs, setPokemonIDs] = useState([
+		{ id: 5, name: "6" },
+		{ id: 1, name: "7" },
+		{ id: 2, name: "8" },
+		{ id: 3, name: "9" },
+		{ id: 4, name: "10" },
+	]);
+	const [sequence, setSequence] = useState([]);
+	const [score, setScore] = useState(0);
+	const [bestScore, setBestScore] = useState(0);
+
 	function shufflePokemon(e) {
 		e.preventDefault();
 		setPokemonIDs([...shuffleArray(pokemonIDs)]);
+
+		if (
+			(sequence.findIndex((element) => element === e.target.innerText) ===
+				-1) |
+			(sequence.length === 0)
+		) {
+			setSequence([...sequence, e.target.innerText]);
+			console.log(e.target.innerText);
+			console.log(sequence);
+		} else {
+			setSequence([]);
+		}
 	}
+	useEffect(() => {
+		if (sequence.length === pokemonIDs.length) {
+			console.log("you has win");
+		}
+	}, [sequence.length, pokemonIDs.length]);
 	return (
 		<div>
 			{pokemonIDs.map((pokemon) => (
-				<button onClick={shufflePokemon} key={pokemon}>
-					{pokemon}
+				<button onClick={shufflePokemon} key={pokemon.id}>
+					{pokemon.name}
 				</button>
 			))}
 		</div>
@@ -62,5 +90,3 @@ function App() {
 		</>
 	);
 }
-
-export default App;
