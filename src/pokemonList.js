@@ -15,8 +15,6 @@ export function getArrayPokemonIDs(num = 6, max = 1000) {
 		}
 	}
 	console.log(pokemonIDList);
-	console.log(shuffleArray(pokemonIDList));
-	console.log(shuffleArray(pokemonIDList));
 	return pokemonIDList;
 }
 

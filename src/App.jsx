@@ -1,92 +1,195 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import winGif from "./assets/win.gif";
 import { getArrayPokemonIDs, shuffleArray } from "./pokemonList";
 export default App;
 
-function PokemonCards() {
-	const [pokemonIDs, setPokemonIDs] = useState([
-		{ id: 5, name: "6" },
-		{ id: 1, name: "7" },
-		{ id: 2, name: "8" },
-		{ id: 3, name: "9" },
-		{ id: 4, name: "10" },
-	]);
-	const [sequence, setSequence] = useState([]);
-	const [score, setScore] = useState(0);
-	const [bestScore, setBestScore] = useState(0);
-
+function PokemonCards(prob) {
 	function shufflePokemon(e) {
-		e.preventDefault();
-		setPokemonIDs([...shuffleArray(pokemonIDs)]);
-
 		if (
-			(sequence.findIndex((element) => element === e.target.innerText) ===
+			(prob.sequence.findIndex(
+				(element) => element === e.target.innerText
+			) ===
 				-1) |
-			(sequence.length === 0)
+			(prob.sequence.length === 0)
 		) {
-			setSequence([...sequence, e.target.innerText]);
-			console.log(e.target.innerText);
-			console.log(sequence);
+			prob.setSequence([...prob.sequence, e.target.innerText]);
+			prob.setScore(prob.score + 1);
+			e.preventDefault();
+
+			prob.buttonsRef.current.className = "cardsContainer cardEffect";
+			setTimeout(() => {
+				if (!prob.showModal)
+					prob.buttonsRef.current.className = "cardsContainer";
+			}, 2000);
+			setTimeout(() => {
+				prob.setPokemonList([...shuffleArray(prob.pokemonList)]);
+				e.target.blur();
+			}, 1000);
 		} else {
-			setSequence([]);
+			prob.setSequence([]);
+			prob.setScore(0);
+			e.target.className = "wrongCard";
+			setTimeout(() => {
+				e.target.className = "";
+			}, 500);
 		}
 	}
-	useEffect(() => {
-		if (sequence.length === pokemonIDs.length) {
-			console.log("you has win");
-		}
-	}, [sequence.length, pokemonIDs.length]);
+
 	return (
-		<div>
-			{pokemonIDs.map((pokemon) => (
-				<button onClick={shufflePokemon} key={pokemon.id}>
-					{pokemon.name}
+		<div className="cardsContainer" ref={prob.buttonsRef}>
+			{prob.pokemonList.map((pokemon) => (
+				<button
+					onClick={shufflePokemon}
+					key={pokemon.id}
+					style={{ backgroundImage: `url(${pokemon.img})` }}
+				>
+					<p>{pokemon.name}</p>
 				</button>
 			))}
 		</div>
 	);
 }
 function App() {
-	const [img, setIMG] = useState(0);
-	const [pokeName, setPokeName] = useState(0);
-	const [id, setID] = useState(1);
-	function getRandomInt(max) {
-		return Math.floor(Math.random() * max);
-	}
+	const [pokemonArray, setPokemonArray] = useState([]);
+	const [id, setID] = useState(0);
+	const [showModal, setShowModal] = useState(false);
+	const [score, setScore] = useState(0);
+	const [bestScore, setBestScore] = useState(0);
+	const [pokemonList, setPokemonList] = useState([]);
+	const [difficulty, setDifficulty] = useState("none");
+	const [sequence, setSequence] = useState([]);
+	const buttonsRef = useRef(null);
 
 	useEffect(() => {
+		//get the id and add the pokemon to the list
+		if (id === 0) return;
 		const fetchData = async () => {
 			const response = await fetch(
 				"https://pokeapi.co/api/v2/pokemon/" + id
 			);
 			const pokemonData = await response.json();
-			setIMG(pokemonData.sprites);
-			setPokeName(pokemonData.name);
+			setPokemonList([
+				...pokemonList,
+				{
+					id: id,
+					name: pokemonData.name,
+					img: pokemonData.sprites.front_default,
+				},
+			]);
 		};
+		pokemonArray.pop();
 		fetchData().catch(console.error);
 	}, [id]);
+
+	useEffect(() => {
+		//compare the prob.sequence size and the pokemon list size to check if the player won
+		if ((sequence.length === pokemonList.length) & (sequence.length > 0)) {
+			setShowModal(true);
+			buttonsRef.current.className = "cardsContainer winAnimation";
+		}
+	}, [sequence.length, pokemonList.length]);
+
+	useEffect(() => {
+		if (pokemonArray.length > 0) {
+			setID(pokemonArray[pokemonArray.length - 1]);
+		}
+	}, [pokemonArray.length]);
+
+	useEffect(() => {
+		if (score > bestScore) {
+			setBestScore(score);
+		}
+	}, [score]);
+
+	useEffect(() => {
+		//set the size of the amount of card depending of the difficulty
+		let cardsNum = 0;
+		if (difficulty === "easy") {
+			cardsNum = 6;
+		}
+		if (difficulty === "normal") {
+			cardsNum = 12;
+		}
+		if (difficulty === "hard") {
+			cardsNum = 24;
+		}
+		setPokemonArray(getArrayPokemonIDs(cardsNum));
+	}, [difficulty]);
+	function closeModal(e) {
+		e.preventDefault();
+		setShowModal(false);
+		setPokemonArray([]);
+		setScore(0);
+		setID(0);
+		setPokemonList([]);
+		setDifficulty("none");
+		setSequence([]);
+		buttonsRef.current.className = "cardsContainer";
+	}
 	return (
 		<>
-			<div>
-				<img src={img.front_shiny} className="logo" alt="Vite logo" />
-				<img
-					src={img.front_default}
-					className="logo react"
-					alt="React logo"
-				/>
-			</div>
-			<h2>
-				{pokeName}: {id}
-			</h2>
 			<h1>POKEMON</h1>
+			<h2>MEMORY GAME</h2>
 			<div className="card">
-				<button onClick={() => setID(getRandomInt(1000))}>
-					picachu yo te elijo!
+				<button
+					onClick={() =>
+						difficulty === "none" ? setDifficulty("easy") : null
+					}
+					style={
+						difficulty === "easy"
+							? { backgroundColor: "rgb(87, 252, 95)" }
+							: null
+					}
+				>
+					Easy
 				</button>
-				<button onClick={() => getArrayPokemonIDs(5)}>get IDs</button>
+				<button
+					onClick={() =>
+						difficulty === "none" ? setDifficulty("normal") : null
+					}
+					style={
+						difficulty === "normal"
+							? { backgroundColor: "rgb(252, 186, 87)" }
+							: null
+					}
+				>
+					Normal
+				</button>
+				<button
+					onClick={() =>
+						difficulty === "none" ? setDifficulty("hard") : null
+					}
+					style={
+						difficulty === "hard"
+							? { backgroundColor: "rgb(252, 87, 87)" }
+							: null
+					}
+				>
+					Hard
+				</button>
 			</div>
-			<p className="read-the-docs">Click to get your pokemon</p>
-			<PokemonCards />
+			<p className="Score">Score: {score}</p>
+			<p className="Score">Best score: {bestScore}</p>
+			<PokemonCards
+				score={score}
+				setScore={setScore}
+				pokemonList={pokemonList}
+				setPokemonList={setPokemonList}
+				setBestScore={setBestScore}
+				setShowModal={setShowModal}
+				sequence={sequence}
+				setSequence={setSequence}
+				buttonsRef={buttonsRef}
+			/>
+			{showModal ? (
+				<dialog open>
+					<h1>CONGRATULATION</h1>
+					<img src={winGif} alt="" />
+					<h3>You have win!</h3>
+					<button onClick={closeModal}>Play Again</button>
+				</dialog>
+			) : null}
 		</>
 	);
 }
